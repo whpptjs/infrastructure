@@ -1,0 +1,262 @@
+SiteLoadBalancerSecurityGroup:
+  Type: AWS::EC2::SecurityGroup
+  Properties:
+    GroupDescription: Access from the internet to the ${sls:stage} load balancer
+    GroupName: ${self:custom.project}-${sls:stage}-lb-securitygroup
+    SecurityGroupEgress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: -1
+        FromPort: -1
+        ToPort: -1
+    SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+      - CidrIpv6: ::/0
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+      - CidrIpv6: ::/0
+        IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+    # VpcId: ${self:custom.vpcId}
+    VpcId: 
+      Fn::ImportValue: 
+        !Sub vpcId
+
+SiteLoadBalancer:
+  Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+  Properties:
+    IpAddressType: ipv4
+    Name: ${self:custom.project}-${sls:stage}-loadbalancer
+    SecurityGroups:
+      - Fn::GetAtt: [SiteLoadBalancerSecurityGroup, GroupId]
+    # Subnets: ${self:custom.publicSubnets}
+    Subnets: 
+      - Fn::ImportValue: !Sub publicSubnet1
+      - Fn::ImportValue: !Sub publicSubnet2
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+    Type: application
+
+DraftTargetGroup:
+  Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  DependsOn: SiteLoadBalancer
+  Properties:
+    Name: ${self:custom.project}-${sls:stage}-draft-target
+    HealthCheckEnabled: true
+    HealthCheckIntervalSeconds: 60
+    HealthCheckPath: /health
+    Port: 3000
+    Protocol: HTTP
+    ProtocolVersion: HTTP1
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+    # VpcId: ${self:custom.vpcId}
+    VpcId: 
+      Fn::ImportValue:
+        !Sub vpcId
+    TargetType: ip
+
+PubTargetGroup:
+  Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  DependsOn: SiteLoadBalancer
+  Properties:
+    Name: ${self:custom.project}-${sls:stage}-pub-target
+    HealthCheckEnabled: true
+    HealthCheckIntervalSeconds: 60
+    HealthCheckPath: /health
+    Port: 3000
+    Protocol: HTTP
+    ProtocolVersion: HTTP1
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+    # VpcId: ${self:custom.vpcId}
+    VpcId: 
+      Fn::ImportValue:
+        !Sub vpcId
+    TargetType: ip
+
+SiteLoadBalancerListener80:
+  Type: AWS::ElasticLoadBalancingV2::Listener
+  Properties:
+    LoadBalancerArn:
+      Ref: SiteLoadBalancer
+    Port: 80
+    Protocol: HTTP
+    DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            StatusCode: HTTP_301
+
+SiteLoadBalancerListener443:
+  Type: AWS::ElasticLoadBalancingV2::Listener
+  Properties:
+    Certificates:
+      # - CertificateArn: !Ref DraftCertificate
+      # - CertificateArn: !Ref PubCertificate
+      - CertificateArn: !Ref Certificate
+    LoadBalancerArn: !Ref SiteLoadBalancer
+    Port: 443
+    Protocol: HTTPS
+    SslPolicy: ELBSecurityPolicy-2016-08
+    DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            ContentType: "text/plain"
+            MessageBody: "Not Found"
+            StatusCode: "404"
+
+SiteLoadBalancerListener443RuleDraftForwardRule:
+  Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  DependsOn: DraftTargetGroup
+  Properties:
+    Actions:
+      - Type: 'forward'
+        TargetGroupArn:
+          Ref: DraftTargetGroup
+    Conditions:
+      - Field: host-header
+        Values:
+          - ${self:custom.draftDomain}
+    ListenerArn:
+      Ref: SiteLoadBalancerListener443
+    Priority: 3
+
+SiteLoadBalancerListener443RuleApexRedirectRule:
+  Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  DependsOn: PubTargetGroup
+  Properties:
+    Actions:
+      - Type: 'redirect'
+        RedirectConfig:
+          Protocol: HTTPS
+          Port: 443
+          Host: ${self:custom.pubDomain}
+          Path: /#{path}
+          Query: '#{query}'
+          StatusCode: HTTP_301
+    Conditions:
+      - Field: host-header
+        Values:
+          - ${self:custom.apexDomain}
+    ListenerArn:
+      Ref: SiteLoadBalancerListener443
+    Priority: 2
+
+SiteLoadBalancerListener443RulePubForwardRule:
+  Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  DependsOn: PubTargetGroup
+  Properties:
+    Actions:
+      - Type: 'forward'
+        TargetGroupArn:
+          Ref: PubTargetGroup
+    Conditions:
+      - Field: host-header
+        Values:
+          - ${self:custom.pubDomain}
+    ListenerArn:
+      Ref: SiteLoadBalancerListener443
+    Priority: 1
+
+# SiteLoadBalancerListenerCert:
+#   Type: AWS::ElasticLoadBalancingV2::ListenerCertificate
+#   Properties:
+#     Certificates:
+#       - CertificateArn:
+#           Ref: SiteLoadBalancerCertificate
+#     ListenerArn:
+#       Ref: SiteLoadBalancerListener443
+
+# SiteLoadBalancerCertificate:
+#   Type: AWS::CertificateManager::Certificate
+#   Properties:
+#     DomainName: ${self:custom.loadBalancerDomain}
+#     SubjectAlternativeNames:
+#       - ${self:custom.apexDomain}
+#     DomainValidationOptions:
+#       - DomainName: ${self:custom.apexDomain}
+#         HostedZoneId: ${self:custom.dnsZoneId}
+#       - DomainName: ${self:custom.loadBalancerDomain}
+#         HostedZoneId: ${self:custom.dnsZoneId}
+#     Tags:
+#       - Key: project
+#         Value: ${self:custom.project}
+#     ValidationMethod: DNS
+
+# SiteLoadBalancerGlobalAccelerator:
+#   Type: AWS::GlobalAccelerator::Accelerator
+#   Properties:
+#     Name: ${self:custom.project}-${sls:stage}-lb-global-acc
+#     Enabled: true
+#     IpAddressType: IPV4
+#     Tags:
+#       - Key: project
+#         Value: ${self:custom.project}
+
+# SiteLoadBalanceGlobalAcceleratorListener:
+#   Type: AWS::GlobalAccelerator::Listener
+#   Properties:
+#     AcceleratorArn:
+#       Ref: SiteLoadBalancerGlobalAccelerator
+#     PortRanges:
+#       - FromPort: 80
+#         ToPort: 80
+#     Protocol: TCP
+
+# SiteLoadBalanceGlobalAcceleratorEndpointGroup:
+#   Type: AWS::GlobalAccelerator::EndpointGroup
+#   Properties:
+#     ListenerArn:
+#       Ref: SiteLoadBalanceGlobalAcceleratorListener
+#     EndpointGroupRegion: ap-southeast-2
+#     EndpointConfigurations:
+#       - ClientIPPreservationEnabled: true
+#         EndpointId:
+#           Ref: SiteLoadBalancer
+#         Weight: 128
+
+# SiteLoadBalancerDraftRouting:
+#   Type: AWS::Route53::RecordSet
+#   Properties:
+#     HostedZoneId: ${self:custom.dnsZoneId}
+#     Name: ${self:custom.draftDomain }
+#     ResourceRecords:
+#       - Fn::GetAtt: [SiteLoadBalancer, DNSName]
+#     TTL: 300
+#     Type: CNAME
+
+# SiteLoadBalancerDraftRouting:
+#   Type: AWS::Route53::RecordSet
+#   Properties:
+#     HostedZoneId: ${self:custom.dnsZoneId}
+#     Name: ${self:custom.draftDomain}
+#     AliasTarget:
+#       DNSName: !GetAtt SiteLoadBalancer.DNSName
+#       HostedZoneId: !GetAtt SiteLoadBalancer.CanonicalHostedZoneID
+#     Type: A
+
+# SiteLoadBalancerPubRouting:
+#   Type: AWS::Route53::RecordSet
+#   Properties:
+#     HostedZoneId: ${self:custom.dnsZoneId}
+#     Name: ${self:custom.pubDomain }
+#     ResourceRecords:
+#       - Fn::GetAtt: [SiteLoadBalancer, DNSName]
+#     TTL: 300
+#     Type: CNAME

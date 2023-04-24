@@ -1,0 +1,180 @@
+CodeBuildLogGroup:
+  Type: AWS::Logs::LogGroup
+  Properties:
+    LogGroupName: /codebuild/${self:custom.project}-${sls:stage}
+    Tags:
+        - Key: project
+          Value: ${self:custom.project}
+
+CodeBuild:
+  Type: AWS::CodeBuild::Project
+  Properties: 
+    Artifacts: 
+      Type: NO_ARTIFACTS
+    Environment: 
+      ComputeType: BUILD_GENERAL1_LARGE
+      Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
+      PrivilegedMode: true
+      Type: LINUX_CONTAINER
+    LogsConfig: 
+      CloudWatchLogs: 
+        GroupName: !Ref CodeBuildLogGroup
+        Status: ENABLED
+    Name: ${self:custom.project}-${sls:stage}-codebuild
+    ServiceRole: 
+      !Ref CodeBuildRole
+    Source: 
+      GitCloneDepth: 1
+      GitSubmodulesConfig: 
+        FetchSubmodules: false
+      ReportBuildStatus: true
+      Type: GITHUB
+      Location: ${self:custom.repositoryLocation}
+    VpcConfig:
+      SecurityGroupIds: 
+        [Fn::ImportValue:
+          !Sub vpcDefaultSecurityGroup]
+      Subnets: 
+        [Fn::ImportValue:
+          !Sub privateSubnet1]
+      VpcId: 
+        Fn::ImportValue:
+          !Sub vpcId
+    Tags: 
+      - Key: project
+        Value: ${self:custom.project}
+
+PipelineArtifactStore:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: ${self:custom.project}-codepipeline-artifact-store
+    AccessControl: Private
+    PublicAccessBlockConfiguration:
+      BlockPublicAcls: false
+      BlockPublicPolicy: false
+      IgnorePublicAcls: false
+      RestrictPublicBuckets: false
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+
+PipelineArtifactStorePolicy:
+  Type: AWS::S3::BucketPolicy
+  Properties:
+    Bucket: !Ref PipelineArtifactStore
+    PolicyDocument:
+      Version: "2012-10-17"
+      Id: "SSEAndSSLPolicy"
+      Statement:
+        - Sid: "DenyUnEncryptedObjectUploads"
+          Effect: "Deny"
+          Principal: "*"
+          Action: "s3:PutObject"
+          Resource: !Sub "arn:aws:s3:::${PipelineArtifactStore}/*"
+          Condition:
+            StringNotEquals:
+              "s3:x-amz-server-side-encryption": "aws:kms"
+        - Sid: "DenyInsecureConnections"
+          Effect: "Deny"
+          Principal: "*"
+          Action: "s3:*"
+          Resource: !Sub "arn:aws:s3:::${PipelineArtifactStore}/*"
+          Condition:
+            Bool:
+              "aws:SecureTransport": "false"
+
+Pipeline:
+  Type: AWS::CodePipeline::Pipeline
+  Properties:
+    Name: ${self:custom.project}-${sls:stage}-pipeline
+    ArtifactStore: 
+      Type: S3
+      Location: 
+        Ref: PipelineArtifactStore
+    RoleArn:
+      Fn::ImportValue: !Sub codePipelineRoleArn
+    Stages: 
+    - Name: Source
+      Actions:
+        - Name: Source
+          Namespace: SourceVariables
+          ActionTypeId:
+            Category: Source
+            Owner: AWS
+            Provider: CodeStarSourceConnection
+            Version: 1
+          OutputArtifacts:
+            - Name: SourceArtifact
+          Configuration:
+            ConnectionArn: ${self:custom.connectionArn}
+            FullRepositoryId: ${self:custom.repositoryName}
+            BranchName: ${self:custom.branchName}
+            OutputArtifactFormat: CODE_ZIP
+          RunOrder: 1
+    - Name: Build
+      Actions:
+        - Name: Build-Draft
+          Namespace: BuildVariablesDraft
+          ActionTypeId:
+            Category: Build
+            Owner: AWS
+            Provider: CodeBuild
+            Version: 1
+          Configuration:
+            ProjectName: !Ref CodeBuild
+            EnvironmentVariables: '[{"name":"NODE_ENV","value":"production","type":"PLAINTEXT"},{"name":"GOOGLE_TAGMANAGER","value":"","type":"PLAINTEXT"},{"name":"DRAFT","value":"true","type":"PLAINTEXT"}]'
+          OutputArtifacts:
+            - Name: BuildArtifactDraft
+          InputArtifacts:
+            - Name: SourceArtifact
+          RunOrder: 1
+        - Name: Build-Pub
+          Namespace: BuildVariablesPub
+          ActionTypeId:
+            Category: Build
+            Owner: AWS
+            Provider: CodeBuild
+            Version: 1
+          Configuration:
+            ProjectName: !Ref CodeBuild
+            EnvironmentVariables: '[{"name":"NODE_ENV","value":"production","type":"PLAINTEXT"},{"name":"GOOGLE_TAGMANAGER","value":"","type":"PLAINTEXT"},{"name":"DRAFT","value":"false","type":"PLAINTEXT"}]'
+          OutputArtifacts:
+            - Name: BuildArtifactPub
+          InputArtifacts:
+            - Name: SourceArtifact
+          RunOrder: 1
+    - Name: Deploy
+      Actions:
+        - Name: Deploy-Draft
+          Namespace: DeployVariablesDraft
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: ECS
+            Version: 1
+          Configuration:
+            ClusterName: ${self:custom.project}-${sls:stage}-cluster
+            ServiceName: ${self:custom.project}-draft
+            FileName: definitions/release.json
+            DeploymentTimeout: 20
+          InputArtifacts:
+            - Name: BuildArtifactDraft
+          RunOrder: 1
+        - Name: Deploy-Pub
+          Namespace: DeployVariablesPub
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: ECS
+            Version: 1
+          Configuration:
+            ClusterName: ${self:custom.project}-${sls:stage}-cluster
+            ServiceName: ${self:custom.project}-pub
+            FileName: definitions/release.json
+            DeploymentTimeout: 20
+          InputArtifacts:
+            - Name: BuildArtifactPub
+          RunOrder: 1
+    Tags: 
+      - Key: project
+        Value: ${self:custom.project}

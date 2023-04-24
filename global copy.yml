@@ -1,0 +1,62 @@
+StagingCertificate:
+  Type: AWS::CertificateManager::Certificate
+  Properties:
+    DomainName: ${self:custom.stagingApexDomain}
+    SubjectAlternativeNames:
+        - ${self:custom.stagingDraftDomain}
+        - ${self:custom.stagingPubDomain}
+    DomainValidationOptions:
+      - DomainName: ${self:custom.dnsZoneName}
+        HostedZoneId: ${self:custom.dnsZoneId}
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+    ValidationMethod: DNS
+
+# StagingDraftDistributionCertificate:
+#   Type: AWS::CertificateManager::Certificate
+#   Properties:
+#     DomainName: ${self:custom.stagingDraftDomain }
+#     DomainValidationOptions:
+#       - DomainName: ${self:custom.stagingDraftDomain}
+#         HostedZoneId: ${self:custom.dnsZoneId}
+#     Tags:
+#       - Key: project
+#         Value: ${self:custom.project}
+#     ValidationMethod: DNS
+
+# StagingPubDistributionCertificate:
+#   Type: AWS::CertificateManager::Certificate
+#   Properties:
+#     DomainName: ${self:custom.stagingPubDomain }
+#     DomainValidationOptions:
+#       - DomainName: ${self:custom.stagingPubDomain}
+#         HostedZoneId: ${self:custom.dnsZoneId}
+#     Tags:
+#       - Key: project
+#         Value: ${self:custom.project}
+#     ValidationMethod: DNS
+
+# LiveDraftDistributionCertificate:
+#   Type: AWS::CertificateManager::Certificate
+#   Properties:
+#     DomainName: ${self:custom.liveDraftDomain }
+#     DomainValidationOptions:
+#       - DomainName: ${self:custom.liveDraftDomain}
+#         HostedZoneId: ${self:custom.dnsZoneId}
+#     Tags:
+#       - Key: project
+#         Value: ${self:custom.project}
+#     ValidationMethod: DNS
+
+# LivePubDistributionCertificate:
+#   Type: AWS::CertificateManager::Certificate
+#   Properties:
+#     DomainName: ${self:custom.livePubDomain }
+#     DomainValidationOptions:
+#       - DomainName: ${self:custom.livePubDomain}
+#         HostedZoneId: ${self:custom.dnsZoneId}
+#     Tags:
+#       - Key: project
+#         Value: ${self:custom.project}
+#     ValidationMethod: DNS

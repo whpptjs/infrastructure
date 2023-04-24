@@ -1,0 +1,233 @@
+VPC:
+  Type: AWS::EC2::VPC
+  Properties:
+    CidrBlock: 10.0.0.0/16
+    EnableDnsSupport: true
+    EnableDnsHostnames: true
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+      - Key: Name
+        Value: ${self:custom.project}-vpc
+
+PublicSubnet1:
+  Type: AWS::EC2::Subnet
+  Properties:
+    VpcId:
+      Ref: VPC
+    AvailabilityZone: !Select [0, !GetAZs '']
+    CidrBlock: 10.0.0.0/26
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+      - Key: Name
+        Value: ${self:custom.project}-public-subnet-1
+
+PublicSubnet2:
+  Type: AWS::EC2::Subnet
+  Properties:
+    VpcId:
+      Ref: VPC
+    AvailabilityZone: !Select [1, !GetAZs '']
+    CidrBlock: 10.0.0.64/26
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+      - Key: Name
+        Value: ${self:custom.project}-public-subnet-2
+
+PrivateSubnet1:
+  Type: AWS::EC2::Subnet
+  Properties:
+    VpcId:
+      Ref: VPC
+    # VpcId: 
+    #   Fn::ImportValue:
+    #     !Sub vpcId
+    AvailabilityZone: !Select [0, !GetAZs '']
+    CidrBlock: 10.0.1.0/26
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+      - Key: Name
+        Value: ${self:custom.project}-private-subnet-1
+
+PrivateSubnet2:
+  Type: AWS::EC2::Subnet
+  Properties:
+    VpcId:
+      Ref: VPC
+    # VpcId: 
+    #   Fn::ImportValue:
+    #     !Sub vpcId
+    AvailabilityZone: !Select [1, !GetAZs '']
+    CidrBlock: 10.0.1.64/26
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+      - Key: Name
+        Value: ${self:custom.project}-private-subnet-2
+
+PublicRouteTable:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId:
+          Ref: VPC
+        Tags:
+          - Key: project
+            Value: ${self:custom.project}
+          - Key: Name
+            Value: ${self:custom.project}-public-route-table
+
+InternetGateway:
+      Type: AWS::EC2::InternetGateway
+      Properties:
+        Tags:
+          - Key: project
+            Value: ${self:custom.project}
+          - Key: Name
+            Value: ${self:custom.project}-internet-gateway
+
+InternetGatewayAttachment:
+  Type: AWS::EC2::VPCGatewayAttachment
+  Properties:
+    VpcId:
+      Ref: VPC
+    InternetGatewayId:
+      Ref: InternetGateway
+
+PublicRouteTableAssociation1:
+  Type: AWS::EC2::SubnetRouteTableAssociation
+  Properties:
+    SubnetId:
+      Ref: PublicSubnet1
+    RouteTableId:
+      Ref: PublicRouteTable
+
+PublicRouteTableAssociation2:
+  Type: AWS::EC2::SubnetRouteTableAssociation
+  Properties:
+    SubnetId:
+      Ref: PublicSubnet2
+    RouteTableId:
+      Ref: PublicRouteTable
+
+PublicRoute:
+  Type: AWS::EC2::Route
+  Properties:
+    RouteTableId:
+      Ref: PublicRouteTable
+    DestinationCidrBlock: 0.0.0.0/0
+    GatewayId:
+      Ref: InternetGateway
+
+PrivateRouteTable:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId:
+          Ref: VPC
+        # VpcId: 
+        #   Fn::ImportValue:
+        #     !Sub vpcId
+        Tags:
+          - Key: project
+            Value: ${self:custom.project}
+          - Key: Name
+            Value: ${self:custom.project}-${sls:stage}-private-route-table
+
+NatGatewayEIP:
+  Type: AWS::EC2::EIP
+  Properties:
+    Domain: vpc
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+      - Key: Name
+        Value: ${self:custom.project}-eip
+
+NatGateway:
+  Type: AWS::EC2::NatGateway
+  Properties:
+    AllocationId:
+      Fn::GetAtt: [NatGatewayEIP, AllocationId]
+    SubnetId:
+      Ref: PublicSubnet1
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+      - Key: Name
+        Value: ${self:custom.project}-nat-gateway
+
+PrivateRouteTableAssociation1:
+  Type: AWS::EC2::SubnetRouteTableAssociation
+  Properties:
+    SubnetId:
+      Ref: PrivateSubnet1
+    RouteTableId:
+      Ref: PrivateRouteTable
+
+PrivateRouteTableAssociation2:
+  Type: AWS::EC2::SubnetRouteTableAssociation
+  Properties:
+    SubnetId:
+      Ref: PrivateSubnet2
+    RouteTableId:
+      Ref: PrivateRouteTable
+
+PrivateRoute:
+  Type: AWS::EC2::Route
+  Properties:
+    RouteTableId:
+      Ref: PrivateRouteTable
+    DestinationCidrBlock: 0.0.0.0/0
+    NatGatewayId:
+      Ref: NatGateway
+      # Fn::ImportValue:
+      #   !Sub natGateway
+
+EndpointSecurityGroup:
+  Type: AWS::EC2::SecurityGroup
+  Properties:
+    GroupDescription: Access to the mongodb endpoint
+    GroupName: ${self:custom.project}-${sls:stage}-endpoint-securitygroup
+    VpcId: 
+      Ref: VPC
+    # VpcId: 
+    #   Fn::ImportValue:
+    #     !Sub vpcId
+    SecurityGroupIngress:
+      - IpProtocol: -1
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 0.0.0.0/0
+    SecurityGroupEgress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: -1
+        FromPort: -1
+        ToPort: -1
+    Tags: 
+      - Key: project
+        Value: ${self:custom.project}
+
+Endpoint:
+  Type: AWS::EC2::VPCEndpoint
+  Properties: 
+    SecurityGroupIds: 
+      - Ref: EndpointSecurityGroup
+      # - Fn::ImportValue:
+          # !Sub vpcDefaultSecurityGroup
+      - !GetAtt VPC.DefaultSecurityGroup
+    ServiceName: ${self:custom.endpointServiceName}
+    SubnetIds: 
+      - Ref: PrivateSubnet1
+      - Ref: PrivateSubnet2
+    VpcEndpointType: Interface
+    VpcId: 
+      # Fn::ImportValue:
+      #   !Sub vpcId
+      Ref: VPC
+    # Tags:
+    #   - Key: Name
+    #     Value: ${self:custom.project}-${sls:stage}-endpoint
+    #   - Key: project
+    #     Value: ${self:custom.project}

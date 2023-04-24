@@ -1,0 +1,65 @@
+MediaStorageUser:
+  Type: AWS::IAM::User
+  Properties:
+    UserName: ${self:custom.project}-${sls:stage}-media-user
+    ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AmazonS3FullAccess
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+
+MediaStorageUserAccessKey:
+  Type: AWS::IAM::AccessKey
+  Properties:
+    Serial: 1
+    Status: Active
+    UserName:
+      Ref: MediaStorageUser
+
+MediaStorageUserAccessParameter:
+  Type: AWS::SSM::Parameter
+  Properties:
+    Name: ${self:custom.project}-${sls:stage}-accessParam
+    Type: String
+    Value:
+      Fn::GetAtt: [MediaStorageUserAccessKey, SecretAccessKey]
+    Tags:
+      project: ${self:custom.project}
+
+MediaStorage:
+  Type: AWS::S3::Bucket
+  Properties:
+    AccessControl: PublicRead
+    BucketName: ${self:custom.project}-${sls:stage}-media-storage
+    PublicAccessBlockConfiguration:
+      BlockPublicAcls: false
+      BlockPublicPolicy: false
+      IgnorePublicAcls: false
+      RestrictPublicBuckets: false
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+
+MediaStorageS3BucketPolicy:
+  Type: AWS::S3::BucketPolicy
+  Properties:
+    Bucket:
+      Ref: MediaStorage
+    PolicyDocument:
+      Statement:
+        - Sid: PublicReadGetObject
+          Effect: Allow
+          Principal: '*'
+          Action:
+            - s3:GetObject
+          Resource:
+            Fn::Join: ['', ['arn:aws:s3:::', { 'Ref': 'MediaStorage' }, '/*']]
+        - Sid: WebsiteFullAccess
+          Effect: Allow
+          Principal:
+            AWS:
+              Fn::GetAtt: [MediaStorageUser, Arn]
+          Action:
+            - s3:*
+          Resource:
+            Fn::Join: ['', ['arn:aws:s3:::', { 'Ref': 'MediaStorage' }, '/*']]
