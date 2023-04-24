@@ -40,7 +40,7 @@ DraftDistribution:
       Comment: ${self:custom.project}-${sls:stage}-dist-draft
       Enabled: 'true'
       Aliases:
-        - ${self:custom.draftDomain }
+        - ${self:custom.stagingDraftDomain}
       ViewerCertificate:
         AcmCertificateArn: ${self:custom.globalStagingCertificateArn}
         # AcmCertificateArn: 
@@ -105,8 +105,8 @@ PubDistribution:
       Comment: ${self:custom.project}-${sls:stage}-dist-pub
       Enabled: 'true'
       Aliases:
-        - ${self:custom.pubDomain}
-        - ${self:custom.apexDomain}
+        - ${self:custom.stagingPubDomain}
+        - ${self:custom.stagingApexDomain}
       ViewerCertificate:
         AcmCertificateArn: ${self:custom.globalStagingCertificateArn}
         # AcmCertificateArn: !ImportValue globalStagingCertificateArn
@@ -161,7 +161,7 @@ DraftDistributionDNS:
   Type: AWS::Route53::RecordSet
   Properties:
     HostedZoneId: ${self:custom.dnsZoneId}
-    Name: ${self:custom.draftDomain}
+    Name: ${self:custom.stagingDraftDomain}
     AliasTarget:
         DNSName: !GetAtt DraftDistribution.DomainName
         HostedZoneId: Z2FDTNDATAQYW2 # This is the hosted zone ID for CloudFront distributions
@@ -171,7 +171,7 @@ PubDistributionDNS:
   Type: AWS::Route53::RecordSet
   Properties:
     HostedZoneId: ${self:custom.dnsZoneId}
-    Name: ${self:custom.pubDomain}
+    Name: ${self:custom.stagingPubDomain}
     AliasTarget:
         DNSName: !GetAtt PubDistribution.DomainName
         HostedZoneId: Z2FDTNDATAQYW2 # This is the hosted zone ID for CloudFront distributions
@@ -181,7 +181,7 @@ ApexDistributionDNS:
   Type: AWS::Route53::RecordSet
   Properties:
     HostedZoneId: ${self:custom.dnsZoneId}
-    Name: ${self:custom.apexDomain}
+    Name: ${self:custom.stagingApexDomain}
     AliasTarget:
         DNSName: !GetAtt PubDistribution.DomainName
         HostedZoneId: Z2FDTNDATAQYW2 # This is the hosted zone ID for CloudFront distributions

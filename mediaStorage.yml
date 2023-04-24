@@ -29,8 +29,8 @@ MediaStorageUserAccessParameter:
 MediaStorage:
   Type: AWS::S3::Bucket
   Properties:
-    AccessControl: PublicRead
-    BucketName: ${self:custom.project}-${sls:stage}-media-storage
+    AccessControl: Private
+    BucketName: ${self:custom.projectPrefix}-${self:custom.project}-${sls:stage}-media-storage
     PublicAccessBlockConfiguration:
       BlockPublicAcls: false
       BlockPublicPolicy: false

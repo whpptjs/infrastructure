@@ -3,10 +3,14 @@ StagingCertificate:
   Properties:
     DomainName: ${self:custom.stagingApexDomain}
     SubjectAlternativeNames:
-        - ${self:custom.stagingDraftDomain}
-        - ${self:custom.stagingPubDomain}
+      - ${self:custom.stagingDraftDomain}
+      - ${self:custom.stagingPubDomain}
     DomainValidationOptions:
-      - DomainName: ${self:custom.dnsZoneName}
+      - DomainName: ${self:custom.stagingApexDomain}
+        HostedZoneId: ${self:custom.dnsZoneId}
+      - DomainName: ${self:custom.stagingDraftDomain}
+        HostedZoneId: ${self:custom.dnsZoneId}
+      - DomainName: ${self:custom.stagingPubDomain}
         HostedZoneId: ${self:custom.dnsZoneId}
     Tags:
       - Key: project

@@ -3,7 +3,7 @@ DockerRepository:
   Properties:
     RepositoryName: ${self:custom.project}-${sls:stage}-repo
     LifecyclePolicy:
-      LifecyclePolicyText: ${file(./infrastructure/common/dockerRepoLifecyclePolicy.js):dockerLifecyclePolicyKeepTen}
+      LifecyclePolicyText: ${file(./infrastructure/dockerRepoLifecyclePolicy.js):dockerLifecyclePolicyKeepTen}
     Tags:
       - Key: project
         Value: ${self:custom.project}
@@ -55,83 +55,17 @@ DraftTaskDefinition:
     Properties:
       ContainerDefinitions: 
         - Name: ${self:custom.project}
-          Image: ${self:custom.ecrImage}
+          Image: node:14-alpine
           Cpu: 0
           PortMappings:
             - ContainerPort: 3000
               HostPort: 3000
               Protocol: tcp
           Essential: true
-          Environment:
-            - Name: S3_BUCKET
-              Value: ${self:custom.project}-${sls:stage}-media-storage
-            - Name: BASE_API_URL
-              Value: https://${self:custom.draftDomain}
-            - Name: DRAFT
-              Value: "true"
-            - Name: MONGO_DB_PUB
-              Value: ${self:custom.project}-${sls:stage}-pub
-            - Name: MONGO_DB
-              Value: ${self:custom.project}-${sls:stage}-draft
-            - Name: BASE_CDN_IMAGE_URL2
-              Value: https://${self:custom.draftDomain}/img2
-            - Name: BOOKEASY_VCID
-              Value: "153"
-            - Name: DEBUG
-              Value: "whppt:*,nuxt:*"
-            - Name: BOOKEASY_LIVE
-              Value: "true"
-            - Name: ATDW_API_URL
-              Value: atlas.atdw-online.com.au
-            - Name: BASE_CDN_IMAGE_URL
-              Value: https://${self:custom.draftDomain}/getImage
-            - Name: BASE_IMAGE_URL
-              Value: https://${self:custom.draftDomain}/img
-            - Name: NODE_ENV
-              Value: production
-            - Name: BASE_URL
-              Value: https://${self:custom.draftDomain}
-            - Name: BOOKEASY_GADGET_KEY
-              Value: 56ae41bd85ca2ca09f1a6e5cf8ff8bb1
-            - Name: BOOKEASY_API_URL
-              Value: webapi.bookeasy.com.au
-            - Name: BASE_IMAGE_URL2
-              Value: https://${self:custom.draftDomain}/img2
-            - Name: S3_ACCESS_KEY_ID
-              Value: !Ref MediaStorageUserAccessKey
-            - Name: LEGACY_API_KEY
-              Value: true
-            - Name: EMAIL_AWS_REGION
-              Value: ap-southeast-2
-            - Name: EMAIL_AWS_ACCESS_KEYID
-              Value: aaa
-            - Name: EMAIL_AWS_SECRET_ACCESS_KEY
-              Value: aaa
-            - Name: EMAIL_FROM_ADDRESS
-              Value: aaa
-            - Name: EMAIL_FEEDBACK_ADDRESS
-              Value: aaa
-            - Name: JWT_AUDIENCE
-              Value: Barossa
-          MountPoints: []
-          VolumesFrom: []
-          Secrets:
-            - Name: ATDW_API_KEY
-              ValueFrom: atdw-api-key
-            - Name: BOOKEASY_API_KEY
-              ValueFrom: bookeasy-api-key
-            - Name: CREATESEND_API_KEY
-              ValueFrom: createsend-api-secret-key
-            - Name: CREATESEND_CLIENT_ID
-              ValueFrom: createsend-client-id
-            - Name: MONGO_URL
-              ValueFrom: mongo-connection-string-staging
-            - Name: S3_SECRET_ACCESS_KEY
-              ValueFrom: ${self:custom.project}-${sls:stage}-accessParam
-            - Name: JWT_SECRET
-              ValueFrom: jwt-secret
-            - Name: APP_KEY
-              ValueFrom: app-key
+          # Environment: ${self:custom.draftEnv}
+          # MountPoints: []
+          # VolumesFrom: []
+          # Secrets: ${self:custom.draftSecrets}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -197,83 +131,17 @@ PubTaskDefinition:
     Properties:
       ContainerDefinitions: 
         - Name: ${self:custom.project}
-          Image: ${self:custom.ecrImage}
+          Image: node:14-alpine
           Cpu: 0
           PortMappings:
             - ContainerPort: 3000
               HostPort: 3000
               Protocol: tcp
           Essential: true
-          Environment:
-            - Name: S3_BUCKET
-              Value: ${self:custom.project}-${sls:stage}-media-storage
-            - Name: BASE_API_URL
-              Value: https://${self:custom.pubDomain}
-            - Name: DRAFT
-              Value: "false"
-            - Name: MONGO_DB_PUB
-              Value: ${self:custom.project}-${sls:stage}-pub
-            - Name: MONGO_DB
-              Value: ${self:custom.project}-${sls:stage}-pub
-            - Name: BASE_CDN_IMAGE_URL2
-              Value: https://${self:custom.pubDomain}/img2
-            - Name: BOOKEASY_VCID
-              Value: "153"
-            - Name: DEBUG
-              Value: "whppt:*,nuxt:*"
-            - Name: BOOKEASY_LIVE
-              Value: "true"
-            - Name: ATDW_API_URL
-              Value: atlas.atdw-online.com.au
-            - Name: BASE_CDN_IMAGE_URL
-              Value: https://${self:custom.pubDomain}/getImage
-            - Name: BASE_IMAGE_URL
-              Value: https://${self:custom.pubDomain}/img
-            - Name: NODE_ENV
-              Value: production
-            - Name: BASE_URL
-              Value: https://${self:custom.pubDomain}
-            - Name: BOOKEASY_GADGET_KEY
-              Value: 56ae41bd85ca2ca09f1a6e5cf8ff8bb1
-            - Name: BOOKEASY_API_URL
-              Value: webapi.bookeasy.com.au
-            - Name: BASE_IMAGE_URL2
-              Value: https://${self:custom.pubDomain}/img2
-            - Name: S3_ACCESS_KEY_ID
-              Value: !Ref MediaStorageUserAccessKey
-            - Name: LEGACY_API_KEY
-              Value: true
-            - Name: EMAIL_AWS_REGION
-              Value: ap-southeast-2
-            - Name: EMAIL_AWS_ACCESS_KEYID
-              Value: aaa
-            - Name: EMAIL_AWS_SECRET_ACCESS_KEY
-              Value: aaa
-            - Name: EMAIL_FROM_ADDRESS
-              Value: aaa
-            - Name: EMAIL_FEEDBACK_ADDRESS
-              Value: aaa
-            - Name: JWT_AUDIENCE
-              Value: Barossa
-          MountPoints: []
-          VolumesFrom: []
-          Secrets:
-            - Name: ATDW_API_KEY
-              ValueFrom: atdw-api-key
-            - Name: BOOKEASY_API_KEY
-              ValueFrom: bookeasy-api-key
-            - Name: CREATESEND_API_KEY
-              ValueFrom: createsend-api-secret-key
-            - Name: CREATESEND_CLIENT_ID
-              ValueFrom: createsend-client-id
-            - Name: MONGO_URL
-              ValueFrom: mongo-connection-string-staging
-            - Name: S3_SECRET_ACCESS_KEY
-              ValueFrom: ${self:custom.project}-${sls:stage}-accessParam
-            - Name: JWT_SECRET
-              ValueFrom: jwt-secret
-            - Name: APP_KEY
-              ValueFrom: app-key
+          # Environment: ${self:custom.pubEnv}
+          # MountPoints: []
+          # VolumesFrom: []
+          # Secrets: ${self:custom.pubSecrets}
           LogConfiguration:
             LogDriver: awslogs
             Options:

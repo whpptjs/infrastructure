@@ -47,7 +47,7 @@ CodeBuild:
 PipelineArtifactStore:
   Type: AWS::S3::Bucket
   Properties:
-    BucketName: ${self:custom.project}-codepipeline-artifact-store
+    BucketName: ${self:custom.projectPrefix}-${self:custom.project}-codepipeline-artifact-store
     AccessControl: Private
     PublicAccessBlockConfiguration:
       BlockPublicAcls: false
@@ -85,6 +85,10 @@ PipelineArtifactStorePolicy:
 
 Pipeline:
   Type: AWS::CodePipeline::Pipeline
+  DependsOn:
+      - DraftEcsService
+      - PubEcsService
+      - CodeBuild
   Properties:
     Name: ${self:custom.project}-${sls:stage}-pipeline
     ArtifactStore: 
