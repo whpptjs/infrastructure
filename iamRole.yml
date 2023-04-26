@@ -42,7 +42,7 @@ EcsRole:
 CodeBuildRole:
   Type: AWS::IAM::Role
   Properties:
-    RoleName: codeBuildRole-${sls:stage}
+    RoleName: codeBuildRole
     AssumeRolePolicyDocument:
       Version: "2012-10-17"
       Statement:
@@ -102,6 +102,16 @@ CodeBuildRole:
               #       - Fn::ImportValue: !Sub privateSubnet1
               #     "ec2:AuthorizedService":
               #       - codebuild.amazonaws.com
+      - PolicyName: AmazonSSMReadOnlyAccess
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - ssm:Describe*
+                - ssm:Get*
+                - ssm:List*
+              Resource: "*"
     Tags:
         - Key: project
           Value: ${self:custom.project}
@@ -230,3 +240,26 @@ CodePipelineRole:
     Tags:
         - Key: project
           Value: ${self:custom.project}
+
+ChatbotRole:
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: chatbotRole
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service: chatbot.amazonaws.com
+          Action: sts:AssumeRole
+    Policies:
+      - PolicyName: ChatbotNotificationOnlyPolicy
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - cloudwatch:Describe*
+                - cloudwatch:Get*
+                - cloudwatch:List*
+              Resource: "*"

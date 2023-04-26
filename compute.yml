@@ -55,17 +55,17 @@ DraftTaskDefinition:
     Properties:
       ContainerDefinitions: 
         - Name: ${self:custom.project}
-          Image: node:14-alpine
+          Image: hello-world:latest
           Cpu: 0
           PortMappings:
             - ContainerPort: 3000
               HostPort: 3000
               Protocol: tcp
           Essential: true
-          # Environment: ${self:custom.draftEnv}
-          # MountPoints: []
-          # VolumesFrom: []
-          # Secrets: ${self:custom.draftSecrets}
+          Environment: ${self:custom.draftEnv}
+          MountPoints: []
+          VolumesFrom: []
+          Secrets: ${self:custom.draftSecrets}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -131,17 +131,17 @@ PubTaskDefinition:
     Properties:
       ContainerDefinitions: 
         - Name: ${self:custom.project}
-          Image: node:14-alpine
+          Image: hello-world:latest
           Cpu: 0
           PortMappings:
             - ContainerPort: 3000
               HostPort: 3000
               Protocol: tcp
           Essential: true
-          # Environment: ${self:custom.pubEnv}
-          # MountPoints: []
-          # VolumesFrom: []
-          # Secrets: ${self:custom.pubSecrets}
+          Environment: ${self:custom.pubEnv}
+          MountPoints: []
+          VolumesFrom: []
+          Secrets: ${self:custom.pubSecrets}
           LogConfiguration:
             LogDriver: awslogs
             Options:

@@ -3,8 +3,8 @@ CodeBuildLogGroup:
   Properties:
     LogGroupName: /codebuild/${self:custom.project}-${sls:stage}
     Tags:
-        - Key: project
-          Value: ${self:custom.project}
+      - Key: project
+        Value: ${self:custom.project}
 
 CodeBuild:
   Type: AWS::CodeBuild::Project
@@ -16,13 +16,20 @@ CodeBuild:
       Image: aws/codebuild/amazonlinux2-x86_64-standard:3.0
       PrivilegedMode: true
       Type: LINUX_CONTAINER
+      EnvironmentVariables: 
+        - Name: DOCKER_USER
+          Type: PLAINTEXT
+          Value: sveltestudios
+        - Name: DOCKER_PASSWORD
+          Type: PARAMETER_STORE
+          Value: DOCKER_PASSWORD
     LogsConfig: 
       CloudWatchLogs: 
         GroupName: !Ref CodeBuildLogGroup
         Status: ENABLED
     Name: ${self:custom.project}-${sls:stage}-codebuild
     ServiceRole: 
-      !Ref CodeBuildRole
+      Fn::ImportValue: !Sub codeBuildRoleArn
     Source: 
       GitCloneDepth: 1
       GitSubmodulesConfig: 
@@ -86,8 +93,10 @@ PipelineArtifactStorePolicy:
 Pipeline:
   Type: AWS::CodePipeline::Pipeline
   DependsOn:
-      - DraftEcsService
-      - PubEcsService
+      # - DraftEcsService
+      # - PubEcsService
+      - DraftTaskDefinition
+      - PubTaskDefinition
       - CodeBuild
   Properties:
     Name: ${self:custom.project}-${sls:stage}-pipeline
@@ -126,7 +135,31 @@ Pipeline:
             Version: 1
           Configuration:
             ProjectName: !Ref CodeBuild
-            EnvironmentVariables: '[{"name":"NODE_ENV","value":"production","type":"PLAINTEXT"},{"name":"GOOGLE_TAGMANAGER","value":"","type":"PLAINTEXT"},{"name":"DRAFT","value":"true","type":"PLAINTEXT"}]'
+            EnvironmentVariables: 
+              - Name: ENVIRONMENT
+                Value: ${sls:stage}
+                Type: PLAINTEXT
+              - Name: NODE_ENV
+                Value: production
+                Type: PLAINTEXT
+              - Name: GOOGLE_TAGMANAGER
+                Value: 
+                Type: PLAINTEXT
+              - Name: DRAFT
+                Value: "true"
+                Type: PLAINTEXT
+              - Name: NEXT_PUBLIC_BASE_API_URL
+                Value: https://${self:custom.stagingDraftDomain}
+                Type: PLAINTEXT
+              - Name: NEXT_PUBLIC_DRAFT
+                Value: "true"
+                Type: PLAINTEXT
+              - Name: NEXT_PUBLIC_GOOGLE_PLACES_PUB_KEY
+                Value: AIzaSyBT39Z1ERza7LPmXhzLVHKtMGGhHBcXiQ0
+                Type: PLAINTEXT
+              - Name: NEXT_PUBLIC_STRIPE_PUB_KEY
+                Value: pk_test_51LwLIfLi5iu0zliSesqfSds9hOgQNFmwyMKAcmQluWxZkWQmBgBWt4RT3vmP5zK2GK0ieOEZ9gnDZe95CT1Qbmbd00pkH7yhou
+                Type: PLAINTEXT
           OutputArtifacts:
             - Name: BuildArtifactDraft
           InputArtifacts:
@@ -141,7 +174,31 @@ Pipeline:
             Version: 1
           Configuration:
             ProjectName: !Ref CodeBuild
-            EnvironmentVariables: '[{"name":"NODE_ENV","value":"production","type":"PLAINTEXT"},{"name":"GOOGLE_TAGMANAGER","value":"","type":"PLAINTEXT"},{"name":"DRAFT","value":"false","type":"PLAINTEXT"}]'
+            EnvironmentVariables: 
+              - Name: ENVIRONMENT
+                Value: ${sls:stage}
+                Type: PLAINTEXT
+              - Name: NODE_ENV
+                Value: production
+                Type: PLAINTEXT
+              - Name: GOOGLE_TAGMANAGER
+                Value: 
+                Type: PLAINTEXT
+              - Name: DRAFT
+                Value: "false"
+                Type: PLAINTEXT
+              - Name: NEXT_PUBLIC_BASE_API_URL
+                Value: https://${self:custom.stagingDraftDomain}
+                Type: PLAINTEXT
+              - Name: NEXT_PUBLIC_DRAFT
+                Value: "false"
+                Type: PLAINTEXT
+              - Name: NEXT_PUBLIC_GOOGLE_PLACES_PUB_KEY
+                Value: AIzaSyBT39Z1ERza7LPmXhzLVHKtMGGhHBcXiQ0
+                Type: PLAINTEXT
+              - Name: NEXT_PUBLIC_STRIPE_PUB_KEY
+                Value: pk_test_51LwLIfLi5iu0zliSesqfSds9hOgQNFmwyMKAcmQluWxZkWQmBgBWt4RT3vmP5zK2GK0ieOEZ9gnDZe95CT1Qbmbd00pkH7yhou
+                Type: PLAINTEXT
           OutputArtifacts:
             - Name: BuildArtifactPub
           InputArtifacts:

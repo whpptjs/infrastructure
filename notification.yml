@@ -1,0 +1,20 @@
+SnsTopicPipeline:
+  Type: AWS::SNS::Topic
+  Properties: 
+    TopicName: ${self:custom.project}-pipeline
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+
+SlackChannel:
+  Type: AWS::Chatbot::SlackChannelConfiguration
+  DependsOn:
+      - ChatbotRole
+  Properties: 
+    ConfigurationName: channel-${self:custom.slackChannelName}
+    IamRoleArn: 
+      Fn::GetAtt: [ChatbotRole, Arn]
+    SlackChannelId: ${self:custom.slackChannelID}
+    SlackWorkspaceId: ${self:custom.slackWorkspaceId}
+    SnsTopicArns: 
+      - !Ref SnsTopicPipeline
