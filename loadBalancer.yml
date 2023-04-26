@@ -132,7 +132,7 @@ SiteLoadBalancerListener443RuleDraftForwardRule:
     Conditions:
       - Field: host-header
         Values:
-          - ${self:custom.stagingDraftDomain}
+          - ${self:custom.draftDomain}
     ListenerArn:
       Ref: SiteLoadBalancerListener443
     Priority: 3

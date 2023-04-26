@@ -19,16 +19,37 @@ DistributionImagesCachePolicy:
         QueryStringsConfig:
           QueryStringBehavior: all
 
+DistributionAssetsCachePolicy:
+  Type: AWS::CloudFront::CachePolicy
+  Properties:
+    CachePolicyConfig:
+      Comment: Assets cache policy
+      DefaultTTL: 31536000
+      MaxTTL: 31536000
+      MinTTL: 31536000
+      Name: ${self:custom.project}-${sls:stage}-assets-policy
+      ParametersInCacheKeyAndForwardedToOrigin:
+        CookiesConfig:
+          CookieBehavior: none
+        EnableAcceptEncodingBrotli: true
+        EnableAcceptEncodingGzip: true
+        HeadersConfig:
+          HeaderBehavior: whitelist
+          Headers:
+            - Accept
+        QueryStringsConfig:
+          QueryStringBehavior: all
+
 DistributionResponseHeadersPolicy:
   Type: AWS::CloudFront::ResponseHeadersPolicy
-  Properties: 
-    ResponseHeadersPolicyConfig: 
-      CustomHeadersConfig: 
-        Items: 
+  Properties:
+    ResponseHeadersPolicyConfig:
+      CustomHeadersConfig:
+        Items:
           - Header: X-Custom-Header
             Override: false
             Value: RandomValue-1234567890
-      Name: CustomHeaders
+      Name: CustomHeaders-${sls:stage}
 
 DraftDistribution:
   Type: AWS::CloudFront::Distribution
@@ -38,16 +59,13 @@ DraftDistribution:
         Value: ${self:custom.project}
     DistributionConfig:
       Comment: ${self:custom.project}-${sls:stage}-dist-draft
-      Enabled: 'true'
+      Enabled: "true"
       Aliases:
-        - ${self:custom.stagingDraftDomain}
+        - ${self:custom.draftDomain}
       ViewerCertificate:
-        AcmCertificateArn: ${self:custom.globalStagingCertificateArn}
-        # AcmCertificateArn: 
-        #   Value: !ImportValue "globalStagingCertificateArn"
+        AcmCertificateArn: ${self:custom.cdnCertificateArn}
         MinimumProtocolVersion: TLSv1.1_2016
         SslSupportMethod: sni-only
-      # DefaultRootObject: '/*'
       HttpVersion: http2
       DefaultCacheBehavior:
         AllowedMethods:
@@ -58,31 +76,7 @@ DraftDistribution:
         CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS built in disabled cache policy
         OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
         ViewerProtocolPolicy: redirect-to-https
-      CacheBehaviors:
-        - AllowedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
-          CachePolicyId: !Ref DistributionImagesCachePolicy
-          OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
-          ResponseHeadersPolicyId: !Ref DistributionResponseHeadersPolicy
-          PathPattern: '/img/*'
-          TargetOriginId: siteOrigin
-          ViewerProtocolPolicy: https-only
-        - AllowedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
-            - PUT
-            - POST
-            - PATCH
-            - DELETE
-          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS built in disabled cache policy
-          OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
-          ResponseHeadersPolicyId: !Ref DistributionResponseHeadersPolicy
-          PathPattern: '/api/*'
-          TargetOriginId: siteOrigin
-          ViewerProtocolPolicy: https-only
+      CacheBehaviors: ${self:custom.cdnBehaviours}
       Origins:
         - DomainName:
             Fn::GetAtt: [SiteLoadBalancer, DNSName]
@@ -90,29 +84,30 @@ DraftDistribution:
           CustomOriginConfig:
             OriginProtocolPolicy: https-only
             OriginSSLProtocols:
-                - TLSv1
+              - TLSv1
           # OriginCustomHeaders:
           #     - HeaderName: X-Custom-Header
           #       HeaderValue: RandomValue-1234567890
 
 PubDistribution:
   Type: AWS::CloudFront::Distribution
+  DependsOn:
+    - DistributionImagesCachePolicy
+    - DistributionAssetsCachePolicy
   Properties:
     Tags:
       - Key: project
         Value: ${self:custom.project}
     DistributionConfig:
       Comment: ${self:custom.project}-${sls:stage}-dist-pub
-      Enabled: 'true'
+      Enabled: "true"
       Aliases:
         - ${self:custom.stagingPubDomain}
         - ${self:custom.stagingApexDomain}
       ViewerCertificate:
-        AcmCertificateArn: ${self:custom.globalStagingCertificateArn}
-        # AcmCertificateArn: !ImportValue globalStagingCertificateArn
+        AcmCertificateArn: ${self:custom.cdnCertificateArn}
         MinimumProtocolVersion: TLSv1.1_2016
         SslSupportMethod: sni-only
-      # DefaultRootObject: '/*'
       HttpVersion: http2
       DefaultCacheBehavior:
         AllowedMethods:
@@ -123,31 +118,7 @@ PubDistribution:
         CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS built in disabled cache policy
         OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
         ViewerProtocolPolicy: redirect-to-https
-      CacheBehaviors:
-        - AllowedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
-          CachePolicyId: !Ref DistributionImagesCachePolicy
-          OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
-          ResponseHeadersPolicyId: !Ref DistributionResponseHeadersPolicy
-          PathPattern: '/img/*'
-          TargetOriginId: siteOrigin
-          ViewerProtocolPolicy: https-only
-        - AllowedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
-            - PUT
-            - POST
-            - PATCH
-            - DELETE
-          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS built in disabled cache policy
-          OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
-          ResponseHeadersPolicyId: !Ref DistributionResponseHeadersPolicy
-          PathPattern: '/api/*'
-          TargetOriginId: siteOrigin
-          ViewerProtocolPolicy: https-only
+      CacheBehaviors: ${self:custom.cdnBehaviours}
       Origins:
         - DomainName:
             Fn::GetAtt: [SiteLoadBalancer, DNSName]
@@ -155,16 +126,16 @@ PubDistribution:
           CustomOriginConfig:
             OriginProtocolPolicy: https-only
             OriginSSLProtocols:
-                - TLSv1
+              - TLSv1
 
 DraftDistributionDNS:
   Type: AWS::Route53::RecordSet
   Properties:
     HostedZoneId: ${self:custom.dnsZoneId}
-    Name: ${self:custom.stagingDraftDomain}
+    Name: ${self:custom.draftDomain}
     AliasTarget:
-        DNSName: !GetAtt DraftDistribution.DomainName
-        HostedZoneId: Z2FDTNDATAQYW2 # This is the hosted zone ID for CloudFront distributions
+      DNSName: !GetAtt DraftDistribution.DomainName
+      HostedZoneId: Z2FDTNDATAQYW2 # This is the hosted zone ID for CloudFront distributions
     Type: A
 
 PubDistributionDNS:
@@ -173,8 +144,8 @@ PubDistributionDNS:
     HostedZoneId: ${self:custom.dnsZoneId}
     Name: ${self:custom.stagingPubDomain}
     AliasTarget:
-        DNSName: !GetAtt PubDistribution.DomainName
-        HostedZoneId: Z2FDTNDATAQYW2 # This is the hosted zone ID for CloudFront distributions
+      DNSName: !GetAtt PubDistribution.DomainName
+      HostedZoneId: Z2FDTNDATAQYW2 # This is the hosted zone ID for CloudFront distributions
     Type: A
 
 ApexDistributionDNS:
@@ -183,6 +154,6 @@ ApexDistributionDNS:
     HostedZoneId: ${self:custom.dnsZoneId}
     Name: ${self:custom.stagingApexDomain}
     AliasTarget:
-        DNSName: !GetAtt PubDistribution.DomainName
-        HostedZoneId: Z2FDTNDATAQYW2 # This is the hosted zone ID for CloudFront distributions
+      DNSName: !GetAtt PubDistribution.DomainName
+      HostedZoneId: Z2FDTNDATAQYW2 # This is the hosted zone ID for CloudFront distributions
     Type: A

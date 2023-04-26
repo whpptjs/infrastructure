@@ -17,26 +17,26 @@ StagingCertificate:
         Value: ${self:custom.project}
     ValidationMethod: DNS
 
-# DraftCertificate:
-#   Type: AWS::CertificateManager::Certificate
-#   Properties:
-#     DomainName: ${self:custom.draftDomain }
-#     DomainValidationOptions:
-#       - DomainName: ${self:custom.draftDomain}
-#         HostedZoneId: ${self:custom.dnsZoneId}
-#     Tags:
-#       - Key: project
-#         Value: ${self:custom.project}
-#     ValidationMethod: DNS
+LiveCertificate:
+  Type: AWS::CertificateManager::Certificate
+  Properties:
+    DomainName: ${self:custom.livePubDomain}
+    SubjectAlternativeNames:
+      - ${self:custom.liveDraftDomain}
+      - ${self:custom.liveApexDomain}
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+    ValidationMethod: DNS
 
-# PubCertificate:
-#   Type: AWS::CertificateManager::Certificate
-#   Properties:
-#     DomainName: ${self:custom.pubDomain }
-#     DomainValidationOptions:
-#       - DomainName: ${self:custom.pubDomain}
-#         HostedZoneId: ${self:custom.dnsZoneId}
-#     Tags:
-#       - Key: project
-#         Value: ${self:custom.project}
-#     ValidationMethod: DNS
+LoadBalancerCertificate:
+  Type: AWS::CertificateManager::Certificate
+  Properties:
+    DomainName: ${self:custom.pubDomain}
+    SubjectAlternativeNames:
+      - ${self:custom.draftDomain}
+      - ${self:custom.apexDomain}
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+    ValidationMethod: DNS

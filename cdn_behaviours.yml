@@ -1,0 +1,71 @@
+next:
+  - AllowedMethods:
+      - GET
+      - HEAD
+      - OPTIONS
+    CachePolicyId: !Ref DistributionImagesCachePolicy
+    OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
+    ResponseHeadersPolicyId: !Ref DistributionResponseHeadersPolicy
+    PathPattern: "/api/gallery-file/*"
+    TargetOriginId: siteOrigin
+    ViewerProtocolPolicy: https-only
+  - AllowedMethods:
+      - GET
+      - HEAD
+      - OPTIONS
+      - PUT
+      - POST
+      - PATCH
+      - DELETE
+    CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS built in disabled cache policy
+    OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
+    ResponseHeadersPolicyId: !Ref DistributionResponseHeadersPolicy
+    PathPattern: "/api/*"
+    TargetOriginId: siteOrigin
+    ViewerProtocolPolicy: https-only
+  - AllowedMethods:
+      - GET
+      - HEAD
+      - OPTIONS
+    CachePolicyId: !Ref DistributionAssetsCachePolicy
+    OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
+    ResponseHeadersPolicyId: !Ref DistributionResponseHeadersPolicy
+    PathPattern: "/_next/*"
+    TargetOriginId: siteOrigin
+    ViewerProtocolPolicy: https-only
+
+nuxt:
+  - AllowedMethods:
+      - GET
+      - HEAD
+      - OPTIONS
+    CachePolicyId: !Ref DistributionImagesCachePolicy
+    OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
+    ResponseHeadersPolicyId: !Ref DistributionResponseHeadersPolicy
+    PathPattern: "/img/*"
+    TargetOriginId: siteOrigin
+    ViewerProtocolPolicy: https-only
+  - AllowedMethods:
+      - GET
+      - HEAD
+      - OPTIONS
+      - PUT
+      - POST
+      - PATCH
+      - DELETE
+    CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS built in disabled cache policy
+    OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
+    ResponseHeadersPolicyId: !Ref DistributionResponseHeadersPolicy
+    PathPattern: "/api/*"
+    TargetOriginId: siteOrigin
+    ViewerProtocolPolicy: https-only
+  - AllowedMethods:
+      - GET
+      - HEAD
+      - OPTIONS
+    CachePolicyId: !Ref DistributionAssetsCachePolicy
+    OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS built in origin request policy
+    ResponseHeadersPolicyId: !Ref DistributionResponseHeadersPolicy
+    PathPattern: "/nuxt/*"
+    TargetOriginId: siteOrigin
+    ViewerProtocolPolicy: https-only

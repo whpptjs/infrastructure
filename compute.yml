@@ -3,7 +3,7 @@ DockerRepository:
   Properties:
     RepositoryName: ${self:custom.project}-${sls:stage}-repo
     LifecyclePolicy:
-      LifecyclePolicyText: ${file(./infrastructure/dockerRepoLifecyclePolicy.js):dockerLifecyclePolicyKeepTen}
+      LifecyclePolicyText: ${self:custom.dockerRepoPolicyText}
     Tags:
       - Key: project
         Value: ${self:custom.project}
@@ -13,10 +13,8 @@ EcsSecurityGroup:
   Properties:
     GroupDescription: Access from the ${sls:stage} load balancer to the ecs
     GroupName: ${self:custom.project}-${sls:stage}-ecs-securitygroup
-    # VpcId: ${self:custom.vpcId}
-    VpcId: 
-      Fn::ImportValue:
-        !Sub vpcId
+    VpcId:
+      Fn::ImportValue: !Sub vpcId
     SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 3000
@@ -39,159 +37,149 @@ EcsCluster:
       - FARGATE
       - FARGATE_SPOT
     Tags:
-        - Key: project
-          Value: ${self:custom.project}
+      - Key: project
+        Value: ${self:custom.project}
 
 DraftEcsLogGroup:
   Type: AWS::Logs::LogGroup
   Properties:
     LogGroupName: /ecs/${self:custom.project}-${sls:stage}-draft
     Tags:
-        - Key: project
-          Value: ${self:custom.project}
+      - Key: project
+        Value: ${self:custom.project}
 
 DraftTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      ContainerDefinitions: 
-        - Name: ${self:custom.project}
-          Image: hello-world:latest
-          Cpu: 0
-          PortMappings:
-            - ContainerPort: 3000
-              HostPort: 3000
-              Protocol: tcp
-          Essential: true
-          Environment: ${self:custom.draftEnv}
-          MountPoints: []
-          VolumesFrom: []
-          Secrets: ${self:custom.draftSecrets}
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: /ecs/${self:custom.project}-${sls:stage}-draft
-              awslogs-region: ap-southeast-2
-              awslogs-stream-prefix: ecs
-      Cpu: 512
-      # TaskRoleArn: arn:aws:iam::639652667719:role/ecsTaskExecutionRole
-      TaskRoleArn:
-        Fn::ImportValue: !Sub ecsRoleArn
-      # ExecutionRoleArn: arn:aws:iam::639652667719:role/ecsTaskExecutionRole
-      ExecutionRoleArn:
-        Fn::ImportValue: !Sub ecsRoleArn
-      Family: ${self:custom.project}-${sls:stage}-draft
-      Memory: 1024
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: project
-          Value: ${self:custom.project}
+  Type: AWS::ECS::TaskDefinition
+  Properties:
+    ContainerDefinitions:
+      - Name: ${self:custom.project}
+        Image: !Join
+          - ":"
+          - - !GetAtt DockerRepository.RepositoryUri
+            - latest
+        Cpu: 0
+        PortMappings:
+          - ContainerPort: 3000
+            HostPort: 3000
+            Protocol: tcp
+        Essential: true
+        Environment: ${self:custom.draftEnv}
+        MountPoints: []
+        VolumesFrom: []
+        Secrets: ${self:custom.draftSecrets}
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: /ecs/${self:custom.project}-${sls:stage}-draft
+            awslogs-region: ap-southeast-2
+            awslogs-stream-prefix: ecs
+    Cpu: 1024
+    TaskRoleArn:
+      Fn::ImportValue: !Sub ecsRoleArn
+    ExecutionRoleArn:
+      Fn::ImportValue: !Sub ecsRoleArn
+    Family: ${self:custom.project}-${sls:stage}-draft
+    Memory: 4096
+    NetworkMode: awsvpc
+    RequiresCompatibilities:
+      - FARGATE
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
 
 DraftEcsService:
-    Type: AWS::ECS::Service
-    DependsOn:
-      - SiteLoadBalancerListener443RuleDraftForwardRule
-    Properties:
-      ServiceName: ${self:custom.project}-draft
-      Cluster: !Ref EcsCluster
-      DesiredCount: 1
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          SecurityGroups: [
-            { Fn::GetAtt: [EcsSecurityGroup, GroupId] }
-          ]
-          # Subnets: ${self:custom.privateSubnets}
-          Subnets: 
-            - Fn::ImportValue: !Sub privateSubnet1
-            - Fn::ImportValue: !Sub privateSubnet2
-            # - !Ref PrivateSubnet1
-            # - !Ref PrivateSubnet2
-      LoadBalancers:
-        - ContainerName: ${self:custom.project}
-          ContainerPort: 3000
-          # LoadBalancerName: ${self:custom.project}-${sls:stage}-loadbalancer
-          TargetGroupArn: !Ref DraftTargetGroup
-      TaskDefinition: !Ref DraftTaskDefinition
-      Tags:
-        - Key: project
-          Value: ${self:custom.project}
+  Type: AWS::ECS::Service
+  DependsOn:
+    - SiteLoadBalancerListener443RuleDraftForwardRule
+  Properties:
+    ServiceName: ${self:custom.project}-draft
+    Cluster: !Ref EcsCluster
+    DesiredCount: 1
+    LaunchType: FARGATE
+    NetworkConfiguration:
+      AwsvpcConfiguration:
+        SecurityGroups: [{ Fn::GetAtt: [EcsSecurityGroup, GroupId] }]
+        Subnets:
+          - Fn::ImportValue: !Sub privateSubnet1
+          - Fn::ImportValue: !Sub privateSubnet2
+    LoadBalancers:
+      - ContainerName: ${self:custom.project}
+        ContainerPort: 3000
+        TargetGroupArn: !Ref DraftTargetGroup
+    TaskDefinition: !Ref DraftTaskDefinition
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
 
 PubEcsLogGroup:
   Type: AWS::Logs::LogGroup
   Properties:
     LogGroupName: /ecs/${self:custom.project}-${sls:stage}-pub
     Tags:
-        - Key: project
-          Value: ${self:custom.project}
+      - Key: project
+        Value: ${self:custom.project}
 
 PubTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      ContainerDefinitions: 
-        - Name: ${self:custom.project}
-          Image: hello-world:latest
-          Cpu: 0
-          PortMappings:
-            - ContainerPort: 3000
-              HostPort: 3000
-              Protocol: tcp
-          Essential: true
-          Environment: ${self:custom.pubEnv}
-          MountPoints: []
-          VolumesFrom: []
-          Secrets: ${self:custom.pubSecrets}
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: /ecs/${self:custom.project}-${sls:stage}-pub
-              awslogs-region: ap-southeast-2
-              awslogs-stream-prefix: ecs
-      Cpu: 512
-      # TaskRoleArn: arn:aws:iam::639652667719:role/ecsTaskExecutionRole
-      TaskRoleArn:
-        Fn::ImportValue: !Sub ecsRoleArn
-      # ExecutionRoleArn: arn:aws:iam::639652667719:role/ecsTaskExecutionRole
-      ExecutionRoleArn:
-        Fn::ImportValue: !Sub ecsRoleArn
-      Family: ${self:custom.project}-${sls:stage}-pub
-      Memory: 1024
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Tags:
-        - Key: project
-          Value: ${self:custom.project}
+  Type: AWS::ECS::TaskDefinition
+  Properties:
+    ContainerDefinitions:
+      - Name: ${self:custom.project}
+        # Image: hello-world:latest
+        Image: !Join
+          - ":"
+          - - !GetAtt DockerRepository.RepositoryUri
+            - latest
+        Cpu: 0
+        PortMappings:
+          - ContainerPort: 3000
+            HostPort: 3000
+            Protocol: tcp
+        Essential: true
+        Environment: ${self:custom.pubEnv}
+        MountPoints: []
+        VolumesFrom: []
+        Secrets: ${self:custom.pubSecrets}
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: /ecs/${self:custom.project}-${sls:stage}-pub
+            awslogs-region: ap-southeast-2
+            awslogs-stream-prefix: ecs
+    Cpu: 1024
+    TaskRoleArn:
+      Fn::ImportValue: !Sub ecsRoleArn
+    ExecutionRoleArn:
+      Fn::ImportValue: !Sub ecsRoleArn
+    Family: ${self:custom.project}-${sls:stage}-pub
+    Memory: 4096
+    NetworkMode: awsvpc
+    RequiresCompatibilities:
+      - FARGATE
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
 
 PubEcsService:
-    Type: AWS::ECS::Service
-    DependsOn:
-      - SiteLoadBalancerListener443RuleApexRedirectRule
-      - SiteLoadBalancerListener443RulePubForwardRule
-    Properties:
-      ServiceName: ${self:custom.project}-pub
-      Cluster: !Ref EcsCluster
-      DesiredCount: 1
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          SecurityGroups: [
-            { Fn::GetAtt: [EcsSecurityGroup, GroupId] }
-          ]
-          # Subnets: ${self:custom.privateSubnets}
-          Subnets: 
-            - Fn::ImportValue: !Sub privateSubnet1
-            - Fn::ImportValue: !Sub privateSubnet2
-            # - !Ref PrivateSubnet1
-            # - !Ref PrivateSubnet2
-      LoadBalancers:
-        - ContainerName: ${self:custom.project}
-          ContainerPort: 3000
-          # LoadBalancerName: ${self:custom.project}-${sls:stage}-loadbalancer
-          TargetGroupArn: !Ref PubTargetGroup
-      TaskDefinition: !Ref PubTaskDefinition
-      Tags:
-        - Key: project
-          Value: ${self:custom.project}
-          
+  Type: AWS::ECS::Service
+  DependsOn:
+    - SiteLoadBalancerListener443RuleApexRedirectRule
+    - SiteLoadBalancerListener443RulePubForwardRule
+  Properties:
+    ServiceName: ${self:custom.project}-pub
+    Cluster: !Ref EcsCluster
+    DesiredCount: 1
+    LaunchType: FARGATE
+    NetworkConfiguration:
+      AwsvpcConfiguration:
+        SecurityGroups: [{ Fn::GetAtt: [EcsSecurityGroup, GroupId] }]
+        Subnets:
+          - Fn::ImportValue: !Sub privateSubnet1
+          - Fn::ImportValue: !Sub privateSubnet2
+    LoadBalancers:
+      - ContainerName: ${self:custom.project}
+        ContainerPort: 3000
+        TargetGroupArn: !Ref PubTargetGroup
+    TaskDefinition: !Ref PubTaskDefinition
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
