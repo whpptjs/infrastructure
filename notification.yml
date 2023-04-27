@@ -18,3 +18,77 @@ SlackChannel:
     SlackWorkspaceId: ${self:custom.slackWorkspaceId}
     SnsTopicArns: 
       - !Ref SnsTopicPipeline
+
+PipelineNotification:
+  Type: AWS::CodeStarNotifications::NotificationRule
+  Properties: 
+    DetailType: FULL
+    EventTypeIds: 
+      - codepipeline-pipeline-pipeline-execution-failed
+      - codepipeline-pipeline-pipeline-execution-started
+      - codepipeline-pipeline-pipeline-execution-succeeded
+    Name: ${self:custom.project}-${sls:stage}-pipeline-notification
+    Resource: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${Pipeline}
+    Targets: 
+      - TargetAddress: 
+          Fn::ImportValue: !Sub slackChannelArn
+        TargetType: AWSChatbotSlack
+    Tags:
+      project: ${self:custom.project}
+
+SesDomainIdentity:
+  Type: AWS::SES::EmailIdentity
+  Properties: 
+    DkimAttributes: 
+      SigningEnabled: 'true'
+    DkimSigningAttributes: 
+      NextSigningKeyLength: RSA_2048_BIT
+    EmailIdentity: ${self:custom.sesDomainIdentity}
+    MailFromAttributes: 
+      MailFromDomain: ${self:custom.sesMailFromDomain}
+
+SesEmailIdentity:
+  Type: AWS::SES::EmailIdentity
+  Properties: 
+    EmailIdentity: ${self:custom.sesEmailIdentity}
+
+SesUser:
+  Type: AWS::IAM::User
+  Properties:
+    UserName: ${self:custom.project}-ses-user
+    Policies:
+      - PolicyName: SendEmailFromSesIdentity
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Sid: AuthorizeSesDomainIdentity
+              Effect: Allow
+              Resource: !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${SesDomainIdentity}'
+              Action:
+                - 'ses:SendEmail'
+            - Sid: AuthorizeSesEmailIdentity
+              Effect: Allow
+              Resource: !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${SesEmailIdentity}'
+              Action:
+                - 'ses:SendEmail'
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+
+SesUserAccessKey:
+  Type: AWS::IAM::AccessKey
+  Properties:
+    Serial: 1
+    Status: Active
+    UserName:
+      Ref: SesUser
+
+SesUserAccessParameter:
+  Type: AWS::SSM::Parameter
+  Properties:
+    Name: ${self:custom.project}-sesUser-accessParam
+    Type: String
+    Value:
+      Fn::GetAtt: [SesUserAccessKey, SecretAccessKey]
+    Tags:
+      project: ${self:custom.project}
