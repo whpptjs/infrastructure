@@ -102,8 +102,8 @@ PubDistribution:
       Comment: ${self:custom.project}-${sls:stage}-dist-pub
       Enabled: "true"
       Aliases:
-        - ${self:custom.stagingPubDomain}
-        - ${self:custom.stagingApexDomain}
+        - ${self:custom.pubDomain}
+        - ${self:custom.apexDomain}
       ViewerCertificate:
         AcmCertificateArn: ${self:custom.cdnCertificateArn}
         MinimumProtocolVersion: TLSv1.1_2016
