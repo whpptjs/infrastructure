@@ -83,13 +83,13 @@ DraftTaskDefinition:
             awslogs-group: /ecs/${self:custom.project}-${sls:stage}-draft
             awslogs-region: ap-southeast-2
             awslogs-stream-prefix: ecs
-    Cpu: 1024
+    Cpu: ${self:custom.cpuDraftTaskDefinition}
     TaskRoleArn:
       Fn::ImportValue: !Sub ecsRoleArn
     ExecutionRoleArn:
       Fn::ImportValue: !Sub ecsRoleArn
     Family: ${self:custom.project}-${sls:stage}-draft
-    Memory: 4096
+    Memory: ${self:custom.memoryDraftTaskDefinition}
     NetworkMode: awsvpc
     RequiresCompatibilities:
       - FARGATE
@@ -155,13 +155,13 @@ PubTaskDefinition:
             awslogs-group: /ecs/${self:custom.project}-${sls:stage}-pub
             awslogs-region: ap-southeast-2
             awslogs-stream-prefix: ecs
-    Cpu: 1024
+    Cpu: ${self:custom.cpuPubTaskDefinition}
     TaskRoleArn:
       Fn::ImportValue: !Sub ecsRoleArn
     ExecutionRoleArn:
       Fn::ImportValue: !Sub ecsRoleArn
     Family: ${self:custom.project}-${sls:stage}-pub
-    Memory: 4096
+    Memory: ${self:custom.memoryPubTaskDefinition}
     NetworkMode: awsvpc
     RequiresCompatibilities:
       - FARGATE

@@ -31,6 +31,9 @@ MediaStorage:
   Properties:
     AccessControl: Private
     BucketName: ${self:custom.projectPrefix}-${self:custom.project}-${sls:stage}-media-storage
+    OwnershipControls:
+      Rules:
+        - ObjectOwnership: BucketOwnerPreferred
     PublicAccessBlockConfiguration:
       BlockPublicAcls: false
       BlockPublicPolicy: false
