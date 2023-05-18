@@ -1,3 +1,13 @@
+DockerRepository:
+  Type: AWS::ECR::Repository
+  Properties:
+    RepositoryName: ${self:custom.project}-${sls:stage}-repo
+    LifecyclePolicy:
+      LifecyclePolicyText: ${self:custom.dockerRepoPolicyText}
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+
 DraftDockerRepository:
   Type: AWS::ECR::Repository
   Properties:
