@@ -142,7 +142,7 @@ PubDistributionDNS:
   Type: AWS::Route53::RecordSet
   Properties:
     HostedZoneId: ${self:custom.dnsZoneId}
-    Name: ${self:custom.stagingPubDomain}
+    Name: ${self:custom.pubDomain}
     AliasTarget:
       DNSName: !GetAtt PubDistribution.DomainName
       HostedZoneId: Z2FDTNDATAQYW2 # This is the hosted zone ID for CloudFront distributions
@@ -152,7 +152,7 @@ ApexDistributionDNS:
   Type: AWS::Route53::RecordSet
   Properties:
     HostedZoneId: ${self:custom.dnsZoneId}
-    Name: ${self:custom.stagingApexDomain}
+    Name: ${self:custom.apexDomain}
     AliasTarget:
       DNSName: !GetAtt PubDistribution.DomainName
       HostedZoneId: Z2FDTNDATAQYW2 # This is the hosted zone ID for CloudFront distributions

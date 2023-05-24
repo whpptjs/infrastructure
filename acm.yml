@@ -1,16 +1,16 @@
 StagingCertificate:
   Type: AWS::CertificateManager::Certificate
   Properties:
-    DomainName: ${self:custom.stagingApexDomain}
+    DomainName: ${self:custom.apexDomain}
     SubjectAlternativeNames:
-      - ${self:custom.stagingDraftDomain}
-      - ${self:custom.stagingPubDomain}
+      - ${self:custom.draftDomain}
+      - ${self:custom.pubDomain}
     DomainValidationOptions:
-      - DomainName: ${self:custom.stagingApexDomain}
+      - DomainName: ${self:custom.apexDomain}
         HostedZoneId: ${self:custom.dnsZoneId}
-      - DomainName: ${self:custom.stagingDraftDomain}
+      - DomainName: ${self:custom.draftDomain}
         HostedZoneId: ${self:custom.dnsZoneId}
-      - DomainName: ${self:custom.stagingPubDomain}
+      - DomainName: ${self:custom.pubDomain}
         HostedZoneId: ${self:custom.dnsZoneId}
     Tags:
       - Key: project
@@ -20,10 +20,10 @@ StagingCertificate:
 LiveCertificate:
   Type: AWS::CertificateManager::Certificate
   Properties:
-    DomainName: ${self:custom.livePubDomain}
+    DomainName: ${self:custom.pubDomain}
     SubjectAlternativeNames:
-      - ${self:custom.liveDraftDomain}
-      - ${self:custom.liveApexDomain}
+      - ${self:custom.draftDomain}
+      - ${self:custom.apexDomain}
     Tags:
       - Key: project
         Value: ${self:custom.project}

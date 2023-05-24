@@ -133,7 +133,7 @@ PrivateRouteTable:
           - Key: project
             Value: ${self:custom.project}
           - Key: Name
-            Value: ${self:custom.project}-${sls:stage}-private-route-table
+            Value: ${self:custom.project}-private-route-table
 
 NatGatewayEIP:
   Type: AWS::EC2::EIP
@@ -189,7 +189,7 @@ EndpointSecurityGroup:
   Type: AWS::EC2::SecurityGroup
   Properties:
     GroupDescription: Access to the mongodb endpoint
-    GroupName: ${self:custom.project}-${sls:stage}-endpoint-securitygroup
+    GroupName: ${self:custom.project}-endpoint-securitygroup
     VpcId: 
       Ref: VPC
     # VpcId: 

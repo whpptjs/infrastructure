@@ -22,7 +22,7 @@ CodeBuild:
           Value: sveltestudios
         - Name: DOCKER_PASSWORD
           Type: PARAMETER_STORE
-          Value: DOCKER_PASSWORD
+          Value: /CodeBuild/DOCKER_PASSWORD
     LogsConfig:
       CloudWatchLogs:
         GroupName: !Ref CodeBuildLogGroup
