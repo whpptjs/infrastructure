@@ -116,7 +116,7 @@ Pipeline:
             Configuration:
               ConnectionArn: ${self:custom.sourceCodeConnectionArn}
               FullRepositoryId: ${self:custom.repositoryName}
-              BranchName: ${sls:stage}
+              BranchName: ${self:custom.repositoryBranch}
               OutputArtifactFormat: CODE_ZIP
             RunOrder: 1
       - Name: Build
