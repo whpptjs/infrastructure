@@ -2,6 +2,7 @@ VPC:
   Type: AWS::EC2::VPC
   Properties:
     CidrBlock: 10.0.0.0/16
+    # CidrBlock: 172.16.0.0/16
     EnableDnsSupport: true
     EnableDnsHostnames: true
     Tags:
@@ -17,6 +18,7 @@ PublicSubnet1:
       Ref: VPC
     AvailabilityZone: !Select [0, !GetAZs '']
     CidrBlock: 10.0.0.0/26
+    # CidrBlock: 172.16.0.0/26
     Tags:
       - Key: project
         Value: ${self:custom.project}
@@ -30,6 +32,7 @@ PublicSubnet2:
       Ref: VPC
     AvailabilityZone: !Select [1, !GetAZs '']
     CidrBlock: 10.0.0.64/26
+    # CidrBlock: 172.16.0.64/26
     Tags:
       - Key: project
         Value: ${self:custom.project}
@@ -46,6 +49,7 @@ PrivateSubnet1:
     #     !Sub vpcId
     AvailabilityZone: !Select [0, !GetAZs '']
     CidrBlock: 10.0.1.0/26
+    # CidrBlock: 172.16.1.0/26
     Tags:
       - Key: project
         Value: ${self:custom.project}
@@ -62,6 +66,7 @@ PrivateSubnet2:
     #     !Sub vpcId
     AvailabilityZone: !Select [1, !GetAZs '']
     CidrBlock: 10.0.1.64/26
+    # CidrBlock: 172.16.1.64/26
     Tags:
       - Key: project
         Value: ${self:custom.project}

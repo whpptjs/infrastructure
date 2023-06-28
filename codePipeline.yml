@@ -17,12 +17,12 @@ CodeBuild:
       PrivilegedMode: true
       Type: LINUX_CONTAINER
       EnvironmentVariables:
-        - Name: DOCKER_USER
-          Type: PLAINTEXT
-          Value: sveltestudios
+      #   - Name: DOCKER_USER
+      #     Type: PLAINTEXT
+      #     Value: sveltestudios
         - Name: DOCKER_PASSWORD
           Type: PARAMETER_STORE
-          Value: /CodeBuild/DOCKER_PASSWORD
+          Value: docker-password
     LogsConfig:
       CloudWatchLogs:
         GroupName: !Ref CodeBuildLogGroup
@@ -116,6 +116,7 @@ Pipeline:
             Configuration:
               ConnectionArn: ${self:custom.sourceCodeConnectionArn}
               FullRepositoryId: ${self:custom.repositoryName}
+              # BranchName: ${sls:stage}
               BranchName: ${self:custom.repositoryBranch}
               OutputArtifactFormat: CODE_ZIP
             RunOrder: 1

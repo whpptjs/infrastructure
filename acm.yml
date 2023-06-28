@@ -1,4 +1,4 @@
-StagingCertificate:
+Certificate:
   Type: AWS::CertificateManager::Certificate
   Properties:
     DomainName: ${self:custom.apexDomain}
@@ -20,22 +20,10 @@ StagingCertificate:
 LiveCertificate:
   Type: AWS::CertificateManager::Certificate
   Properties:
-    DomainName: ${self:custom.pubDomain}
+    DomainName: ${self:custom.apexDomain}
     SubjectAlternativeNames:
       - ${self:custom.draftDomain}
-      - ${self:custom.apexDomain}
-    Tags:
-      - Key: project
-        Value: ${self:custom.project}
-    ValidationMethod: DNS
-
-LoadBalancerCertificate:
-  Type: AWS::CertificateManager::Certificate
-  Properties:
-    DomainName: ${self:custom.pubDomain}
-    SubjectAlternativeNames:
-      - ${self:custom.draftDomain}
-      - ${self:custom.apexDomain}
+      - ${self:custom.pubDomain}
     Tags:
       - Key: project
         Value: ${self:custom.project}
