@@ -27,8 +27,8 @@ EcsSecurityGroup:
       Fn::ImportValue: !Sub vpcId
     SecurityGroupIngress:
       - IpProtocol: tcp
-        FromPort: 3000
-        ToPort: 3000
+        FromPort: ${self:custom.appPort}
+        ToPort: ${self:custom.appPort}
         SourceSecurityGroupId: !Ref SiteLoadBalancerSecurityGroup
     SecurityGroupEgress:
       - CidrIp: 0.0.0.0/0
@@ -69,8 +69,8 @@ DraftTaskDefinition:
             - latest
         Cpu: 0
         PortMappings:
-          - ContainerPort: 3000
-            HostPort: 3000
+          - ContainerPort: ${self:custom.appPort}
+            HostPort: ${self:custom.appPort}
             Protocol: tcp
         Essential: true
         Environment: ${self:custom.draftEnv}
@@ -114,7 +114,7 @@ DraftEcsService:
           - Fn::ImportValue: !Sub privateSubnet2
     LoadBalancers:
       - ContainerName: ${self:custom.project}
-        ContainerPort: 3000
+        ContainerPort: ${self:custom.appPort}
         TargetGroupArn: !Ref DraftTargetGroup
     TaskDefinition: !Ref DraftTaskDefinition
     Tags:
@@ -141,8 +141,8 @@ PubTaskDefinition:
             - latest
         Cpu: 0
         PortMappings:
-          - ContainerPort: 3000
-            HostPort: 3000
+          - ContainerPort: ${self:custom.appPort}
+            HostPort: ${self:custom.appPort}
             Protocol: tcp
         Essential: true
         Environment: ${self:custom.pubEnv}
@@ -187,7 +187,7 @@ PubEcsService:
           - Fn::ImportValue: !Sub privateSubnet2
     LoadBalancers:
       - ContainerName: ${self:custom.project}
-        ContainerPort: 3000
+        ContainerPort: ${self:custom.appPort}
         TargetGroupArn: !Ref PubTargetGroup
     TaskDefinition: !Ref PubTaskDefinition
     Tags:

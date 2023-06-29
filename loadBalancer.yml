@@ -57,7 +57,7 @@ DraftTargetGroup:
     HealthCheckEnabled: true
     HealthCheckIntervalSeconds: 60
     HealthCheckPath: /health
-    Port: 3000
+    Port: ${self:custom.appPort}
     Protocol: HTTP
     ProtocolVersion: HTTP1
     Tags:
@@ -77,7 +77,7 @@ PubTargetGroup:
     HealthCheckEnabled: true
     HealthCheckIntervalSeconds: 60
     HealthCheckPath: /health
-    Port: 3000
+    Port: ${self:custom.appPort}
     Protocol: HTTP
     ProtocolVersion: HTTP1
     Tags:
