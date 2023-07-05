@@ -23,6 +23,7 @@ LiveCertificate:
     DomainName: ${self:custom.apexDomain}
     SubjectAlternativeNames:
       - ${self:custom.draftDomain}
+      # - ${self:custom.wildcardDomain}
       - ${self:custom.pubDomain}
     Tags:
       - Key: project

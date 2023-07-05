@@ -174,6 +174,44 @@ SiteLoadBalancerListener443RulePubForwardRule:
       Ref: SiteLoadBalancerListener443
     Priority: 1
 
+SiteLoadBalancerGlobalAccelerator:
+  Type: AWS::GlobalAccelerator::Accelerator
+  Properties:
+    Name: ${self:custom.project}-${sls:stage}-lb-global-accelerator
+    Enabled: true
+    IpAddressType: IPV4
+    Tags:
+      - Key: project
+        Value: ${self:custom.project}
+
+SiteLoadBalanceGlobalAcceleratorListener:
+  Type: AWS::GlobalAccelerator::Listener
+  DependsOn: SiteLoadBalancerGlobalAccelerator
+  Properties:
+    AcceleratorArn:
+      Ref: SiteLoadBalancerGlobalAccelerator
+    PortRanges:
+      - FromPort: 80
+        ToPort: 80
+      - FromPort: 443
+        ToPort: 443
+    Protocol: TCP
+
+SiteLoadBalanceGlobalAcceleratorEndpointGroup:
+  Type: AWS::GlobalAccelerator::EndpointGroup
+  DependsOn: 
+    - SiteLoadBalancer
+    - SiteLoadBalanceGlobalAcceleratorListener
+  Properties:
+    ListenerArn:
+      Ref: SiteLoadBalanceGlobalAcceleratorListener
+    EndpointGroupRegion: ap-southeast-2
+    EndpointConfigurations:
+      - ClientIPPreservationEnabled: true
+        EndpointId:
+          Ref: SiteLoadBalancer
+        Weight: 128
+
 # SiteLoadBalancerListenerCert:
 #   Type: AWS::ElasticLoadBalancingV2::ListenerCertificate
 #   Properties:
@@ -198,38 +236,6 @@ SiteLoadBalancerListener443RulePubForwardRule:
 #       - Key: project
 #         Value: ${self:custom.project}
 #     ValidationMethod: DNS
-
-# SiteLoadBalancerGlobalAccelerator:
-#   Type: AWS::GlobalAccelerator::Accelerator
-#   Properties:
-#     Name: ${self:custom.project}-${sls:stage}-lb-global-acc
-#     Enabled: true
-#     IpAddressType: IPV4
-#     Tags:
-#       - Key: project
-#         Value: ${self:custom.project}
-
-# SiteLoadBalanceGlobalAcceleratorListener:
-#   Type: AWS::GlobalAccelerator::Listener
-#   Properties:
-#     AcceleratorArn:
-#       Ref: SiteLoadBalancerGlobalAccelerator
-#     PortRanges:
-#       - FromPort: 80
-#         ToPort: 80
-#     Protocol: TCP
-
-# SiteLoadBalanceGlobalAcceleratorEndpointGroup:
-#   Type: AWS::GlobalAccelerator::EndpointGroup
-#   Properties:
-#     ListenerArn:
-#       Ref: SiteLoadBalanceGlobalAcceleratorListener
-#     EndpointGroupRegion: ap-southeast-2
-#     EndpointConfigurations:
-#       - ClientIPPreservationEnabled: true
-#         EndpointId:
-#           Ref: SiteLoadBalancer
-#         Weight: 128
 
 # SiteLoadBalancerDraftRouting:
 #   Type: AWS::Route53::RecordSet
