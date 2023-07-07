@@ -28,7 +28,6 @@ SiteLoadBalancerSecurityGroup:
     Tags:
       - Key: project
         Value: ${self:custom.project}
-    # VpcId: ${self:custom.vpcId}
     VpcId: 
       Fn::ImportValue: 
         !Sub vpcId
@@ -40,7 +39,6 @@ SiteLoadBalancer:
     Name: ${self:custom.project}-${sls:stage}-loadbalancer
     SecurityGroups:
       - Fn::GetAtt: [SiteLoadBalancerSecurityGroup, GroupId]
-    # Subnets: ${self:custom.publicSubnets}
     Subnets: 
       - Fn::ImportValue: !Sub publicSubnet1
       - Fn::ImportValue: !Sub publicSubnet2
@@ -63,7 +61,6 @@ DraftTargetGroup:
     Tags:
       - Key: project
         Value: ${self:custom.project}
-    # VpcId: ${self:custom.vpcId}
     VpcId: 
       Fn::ImportValue:
         !Sub vpcId
@@ -83,7 +80,6 @@ PubTargetGroup:
     Tags:
       - Key: project
         Value: ${self:custom.project}
-    # VpcId: ${self:custom.vpcId}
     VpcId: 
       Fn::ImportValue:
         !Sub vpcId
@@ -107,8 +103,6 @@ SiteLoadBalancerListener443:
   Type: AWS::ElasticLoadBalancingV2::Listener
   Properties:
     Certificates:
-      # - CertificateArn: !Ref DraftCertificate
-      # - CertificateArn: !Ref PubCertificate
       - CertificateArn: !Ref Certificate
     LoadBalancerArn: !Ref SiteLoadBalancer
     Port: 443

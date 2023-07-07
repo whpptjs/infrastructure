@@ -44,9 +44,6 @@ PrivateSubnet1:
   Properties:
     VpcId:
       Ref: VPC
-    # VpcId: 
-    #   Fn::ImportValue:
-    #     !Sub vpcId
     AvailabilityZone: !Select [0, !GetAZs '']
     CidrBlock: 10.0.1.0/26
     # CidrBlock: 172.16.1.0/26
@@ -61,9 +58,6 @@ PrivateSubnet2:
   Properties:
     VpcId:
       Ref: VPC
-    # VpcId: 
-    #   Fn::ImportValue:
-    #     !Sub vpcId
     AvailabilityZone: !Select [1, !GetAZs '']
     CidrBlock: 10.0.1.64/26
     # CidrBlock: 172.16.1.64/26
@@ -131,9 +125,6 @@ PrivateRouteTable:
       Properties:
         VpcId:
           Ref: VPC
-        # VpcId: 
-        #   Fn::ImportValue:
-        #     !Sub vpcId
         Tags:
           - Key: project
             Value: ${self:custom.project}
@@ -187,8 +178,6 @@ PrivateRoute:
     DestinationCidrBlock: 0.0.0.0/0
     NatGatewayId:
       Ref: NatGateway
-      # Fn::ImportValue:
-      #   !Sub natGateway
 
 EndpointSecurityGroup:
   Type: AWS::EC2::SecurityGroup
@@ -197,9 +186,6 @@ EndpointSecurityGroup:
     GroupName: ${self:custom.project}-endpoint-securitygroup
     VpcId: 
       Ref: VPC
-    # VpcId: 
-    #   Fn::ImportValue:
-    #     !Sub vpcId
     SecurityGroupIngress:
       - IpProtocol: -1
         FromPort: -1
@@ -219,8 +205,6 @@ Endpoint:
   Properties: 
     SecurityGroupIds: 
       - Ref: EndpointSecurityGroup
-      # - Fn::ImportValue:
-          # !Sub vpcDefaultSecurityGroup
       - !GetAtt VPC.DefaultSecurityGroup
     ServiceName: ${self:custom.endpointServiceName}
     SubnetIds: 
@@ -228,11 +212,4 @@ Endpoint:
       - Ref: PrivateSubnet2
     VpcEndpointType: Interface
     VpcId: 
-      # Fn::ImportValue:
-      #   !Sub vpcId
       Ref: VPC
-    # Tags:
-    #   - Key: Name
-    #     Value: ${self:custom.project}-${sls:stage}-endpoint
-    #   - Key: project
-    #     Value: ${self:custom.project}

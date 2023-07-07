@@ -134,7 +134,6 @@ PubTaskDefinition:
   Properties:
     ContainerDefinitions:
       - Name: ${self:custom.project}
-        # Image: hello-world:latest
         Image: !Join
           - ":"
           - - !GetAtt PubDockerRepository.RepositoryUri

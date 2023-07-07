@@ -21,6 +21,8 @@ SlackChannel:
 
 PipelineNotification:
   Type: AWS::CodeStarNotifications::NotificationRule
+  DependsOn:
+      - Pipeline
   Properties: 
     DetailType: FULL
     EventTypeIds: 
@@ -61,11 +63,11 @@ SesUser:
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
-            - Sid: AuthorizeSesDomainIdentity
-              Effect: Allow
-              Resource: !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${SesDomainIdentity}'
-              Action:
-                - 'ses:SendEmail'
+            # - Sid: AuthorizeSesDomainIdentity
+            #   Effect: Allow
+            #   Resource: !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${SesDomainIdentity}'
+            #   Action:
+            #     - 'ses:SendEmail'
             - Sid: AuthorizeSesEmailIdentity
               Effect: Allow
               Resource: !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${SesEmailIdentity}'

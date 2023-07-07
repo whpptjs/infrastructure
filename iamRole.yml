@@ -96,12 +96,6 @@ CodeBuildRole:
               Action:
                 - ec2:CreateNetworkInterfacePermission
               Resource: "*"
-              # Condition:
-              #   StringEquals:
-              #     "ec2:Subnet":
-              #       - Fn::ImportValue: !Sub privateSubnet1
-              #     "ec2:AuthorizedService":
-              #       - codebuild.amazonaws.com
       - PolicyName: AmazonSSMReadOnlyAccess
         PolicyDocument:
           Version: "2012-10-17"
