@@ -206,6 +206,15 @@ SiteLoadBalanceGlobalAcceleratorEndpointGroup:
           Ref: SiteLoadBalancer
         Weight: 128
 
+# ListenerCertificate:
+#   Type: AWS::ElasticLoadBalancingV2::ListenerCertificate
+#   Properties: 
+#     Certificates: 
+#       - CertificateArn: !Ref Certificate
+#     ListenerArn: 
+#       Fn::ImportValue: 
+#         !Sub httpsListenerArn
+
 # SiteLoadBalancerListenerCert:
 #   Type: AWS::ElasticLoadBalancingV2::ListenerCertificate
 #   Properties:

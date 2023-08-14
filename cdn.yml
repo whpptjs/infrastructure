@@ -49,7 +49,7 @@ DistributionResponseHeadersPolicy:
           - Header: X-Custom-Header
             Override: false
             Value: RandomValue-1234567890
-      Name: CustomHeaders-${sls:stage}
+      Name: ${self:custom.project}-${sls:stage}-CustomHeaders
 
 DraftDistribution:
   Type: AWS::CloudFront::Distribution

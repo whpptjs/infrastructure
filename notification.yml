@@ -27,8 +27,11 @@ PipelineNotification:
     DetailType: FULL
     EventTypeIds: 
       - codepipeline-pipeline-pipeline-execution-failed
+      - codepipeline-pipeline-pipeline-execution-canceled
       - codepipeline-pipeline-pipeline-execution-started
+      - codepipeline-pipeline-pipeline-execution-resumed
       - codepipeline-pipeline-pipeline-execution-succeeded
+      - codepipeline-pipeline-pipeline-execution-superseded
     Name: ${self:custom.project}-${sls:stage}-pipeline-notification
     Resource: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${Pipeline}
     Targets: 
@@ -68,11 +71,16 @@ SesUser:
             #   Resource: !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${SesDomainIdentity}'
             #   Action:
             #     - 'ses:SendEmail'
-            - Sid: AuthorizeSesEmailIdentity
+            # - Sid: AuthorizeSesEmailIdentity
+            #   Effect: Allow
+            #   Resource: !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${SesEmailIdentity}'
+            #   Action:
+            #     - 'ses:SendEmail'
+            - Sid: AmazonSesSendingAccess
               Effect: Allow
-              Resource: !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${SesEmailIdentity}'
+              Resource: "*"
               Action:
-                - 'ses:SendEmail'
+                - 'ses:SendRawEmail'
     Tags:
       - Key: project
         Value: ${self:custom.project}
