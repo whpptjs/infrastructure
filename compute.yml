@@ -117,6 +117,7 @@ DraftEcsService:
         ContainerPort: ${self:custom.appPort}
         TargetGroupArn: !Ref DraftTargetGroup
     TaskDefinition: !Ref DraftTaskDefinition
+    PropagateTags: TASK_DEFINITION
     Tags:
       - Key: project
         Value: ${self:custom.project}
@@ -189,6 +190,7 @@ PubEcsService:
         ContainerPort: ${self:custom.appPort}
         TargetGroupArn: !Ref PubTargetGroup
     TaskDefinition: !Ref PubTaskDefinition
+    PropagateTags: TASK_DEFINITION
     Tags:
       - Key: project
         Value: ${self:custom.project}

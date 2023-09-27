@@ -257,3 +257,6 @@ ChatbotRole:
                 - cloudwatch:Get*
                 - cloudwatch:List*
               Resource: "*"
+    Tags:
+        - Key: project
+          Value: ${self:custom.project}
