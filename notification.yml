@@ -80,6 +80,7 @@ SesUser:
               Effect: Allow
               Resource: "*"
               Action:
+                - 'ses:SendEmail'
                 - 'ses:SendRawEmail'
     Tags:
       - Key: project
